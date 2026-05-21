@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>家庭行程 · 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F4F1;
+    --surface: #FFFFFF;
+    --ink: #111111;
+    --ink-mid: #555555;
+    --ink-light: #999999;
+    --ink-xlight: #C8C8C8;
+    --accent: #C4793A;
+    --grad: #3B5B8C;
+    --grad-bg: #EDF1F8;
+    --grad-hdr: #E4EBF5;
+    --nyc: #5B3A7E;
+    --nyc-bg: #F2EDF8;
+    --nyc-hdr: #EAE0F5;
+    --pack: #92400E;
+    --pack-bg: #FEF3C7;
+    --pack-hdr: #FEF0C0;
+    --border: #E8E6E1;
+    --sel-bg: #111111;
+    --radius: 14px;
+    --radius-btn: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-weight: 300;
+    max-width: 430px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ── */
+  .site-hdr {
+    background: var(--ink); color: white;
+    padding: 52px 24px 24px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .hdr-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.38); margin-bottom: 5px;
+  }
+  .hdr-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px; font-weight: 400; line-height: 1.2;
+  }
+  .hdr-title em { font-style: italic; color: rgba(255,255,255,0.45); }
+  .hdr-meta { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.35); font-weight: 300; }
+  .hdr-bottom { margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sel-pill {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.1); border-radius: 20px;
+    padding: 5px 12px; cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.7);
+  }
+  .sel-pill.on { display: flex; }
+  .sel-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+  .export-row { display:flex; gap:6px; }
+  .exp-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.65); padding: 5px 11px;
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.08em;
+    cursor: pointer; border-radius: 6px; text-transform: uppercase;
+  }
+
+  /* ── FEED ── */
+  .feed { padding: 14px 14px 80px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── DAY CARD ── */
+  .day-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  /* ── DAY HEADER ── */
+  .day-hdr {
+    display: flex; align-items: center;
+    padding: 14px 18px 14px;
+    gap: 14px; cursor: pointer;
+    touch-action: manipulation;
+    -webkit-user-select: none; user-select: none;
+    border-bottom: 1px solid transparent;
+    background: white;
+    transition: background 0.1s;
+  }
+  /* colored headers by type */
+  .day-card.grad  .day-hdr { background: var(--grad-hdr); }
+  .day-card.nyc   .day-hdr { background: var(--nyc-hdr);  }
+  .day-card.pack  .day-hdr { background: var(--pack-hdr); }
+
+  .day-card.open > .day-hdr { border-bottom-color: var(--border); }
+  .day-hdr:active { filter: brightness(0.97); }
+
+  /* big date block */
+  .day-date-block { flex-shrink: 0; text-align: right; width: 44px; }
+  .day-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 40px; font-weight: 400; line-height: 1;
+    letter-spacing: -0.02em; color: var(--ink);
+    display: block;
+  }
+  .day-card.grad .day-num { color: var(--grad); }
+  .day-card.nyc  .day-num { color: var(--nyc);  }
+  .day-card.pack .day-num { color: var(--pack); }
+
+  .day-info { flex: 1; min-width: 0; }
+  .day-month-week {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--ink); margin-bottom: 3px;
+    letter-spacing: 0.01em;
+  }
+  .day-card.grad .day-month-week { color: var(--grad); }
+  .day-card.nyc  .day-month-week { color: var(--nyc);  }
+  .day-card.pack .day-month-week { color: var(--pack); }
+
+  .day-ttl {
+    font-size: 13px; font-weight: 400; color: var(--ink-mid);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+  .day-tags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .dtag {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .dtag-grad { background: rgba(59,91,140,0.15); color: var(--grad); }
+  .dtag-nyc  { background: rgba(91,58,126,0.15); color: var(--nyc);  }
+  .dtag-pack { background: rgba(146,64,14,0.2);  color: var(--pack); }
+  .dtag-note { background: rgba(0,0,0,0.07); color: var(--ink-mid); }
+
+  .chev {
+    font-size: 10px; color: var(--ink-xlight); flex-shrink: 0;
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  }
+  .day-card.open .chev { transform: rotate(180deg); }
+
+  /* ── DAY BODY ── */
+  .day-body { display: none; padding: 0 18px 20px; }
+  .day-card.open .day-body { display: block; }
+
+  /* ── SECTION LABEL ── */
+  .slabel {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-light); margin: 18px 0 8px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ── ITEM ROW ── */
+  .irow {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 5px 0; font-size: 13px; line-height: 1.55;
+  }
+  .itime {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--ink-light); flex-shrink: 0; min-width: 52px; padding-top: 2px;
+  }
+  .itext { flex: 1; color: var(--ink); }
+  .isub { font-size: 11px; color: var(--ink-light); margin-top: 2px; line-height: 1.4; }
+  .ipack { color: var(--pack); }
+  .ibold { font-weight: 700; }
+  .ihour { font-size: 10.5px; color: var(--ink-light); margin-left: 4px; font-family: 'DM Mono', monospace; }
+
+  /* ── INSTRUCTION BLOCK ── */
+  .instr {
+    background: #F8F6F2; border-left: 2px solid var(--border);
+    border-radius: 0 6px 6px 0; padding: 10px 12px; margin: 8px 0;
+    font-family: 'DM Mono', monospace; font-size: 10.5px;
+    color: var(--ink-mid); line-height: 1.65;
+  }
+  .instr-lbl {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-xlight); margin-bottom: 5px;
+  }
+
+  /* ── OPTION BUTTONS ── */
+  .opt-group { display: flex; flex-direction: column; gap: 7px; margin-top: 2px; }
+  .opt-btn {
+    width: 100%; background: #FAFAF8;
+    border: 1px solid var(--border); border-radius: var(--radius-btn);
+    padding: 13px 16px; cursor: pointer; text-align: left;
+    display: flex; align-items: flex-start; gap: 10px;
+    transition: background 0.12s; touch-action: manipulation;
+  }
+  .opt-btn:active { background: #F0EDE8; }
+  .opt-btn.sel { background: var(--sel-bg); border-color: var(--sel-bg); }
+  .opt-n {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    color: var(--ink-light); flex-shrink: 0; padding-top: 2px; width: 18px;
+  }
+  .opt-btn.sel .opt-n { color: rgba(255,255,255,0.35); }
+  .opt-c { flex: 1; }
+  .opt-name { font-size: 13px; color: var(--ink); line-height: 1.4; }
+  .opt-btn.sel .opt-name { color: white; }
+  .opt-detail { font-size: 11px; color: var(--ink-light); margin-top: 2px; line-height: 1.4; }
+  .opt-btn.sel .opt-detail { color: rgba(255,255,255,0.45); }
+  .opt-stars { font-size: 10px; margin-top: 2px; opacity: 0.55; }
+  .opt-btn.sel .opt-stars { opacity: 0.6; }
+  .opt-name-bold { font-weight: 700; }
+
+  /* ── OPTIONAL BUTTONS ── */
+  .opt-optional {
+    width: 100%; background: transparent;
+    border: 1px dashed var(--ink-xlight); border-radius: var(--radius-btn);
+    padding: 11px 16px; cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 10px;
+    transition: all 0.12s; margin-top: 7px; touch-action: manipulation;
+  }
+  .opt-optional:active { background: #F0EDE8; }
+  .opt-optional.sel { background: var(--sel-bg); border-color: var(--sel-bg); border-style: solid; }
+  .opt-chip {
+    font-family: 'DM Mono', monospace; font-size: 8px; text-transform: uppercase;
+    letter-spacing: 0.08em; background: #F0EDE8; color: var(--ink-mid);
+    padding: 2px 7px; border-radius: 4px; flex-shrink: 0;
+  }
+  .opt-optional.sel .opt-chip { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.55); }
+  .opt-oname { font-size: 12.5px; color: var(--ink-mid); font-style: italic; flex: 1; line-height: 1.4; }
+  .opt-optional.sel .opt-oname { color: white; font-style: normal; }
+  .opt-onote { font-size: 10.5px; color: var(--ink-light); font-style: normal; margin-top: 1px; }
+
+  /* ── BOTTOM SHEET ── */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 100; backdrop-filter: blur(2px);
+  }
+  .sheet-overlay.on { display: block; }
+  .sheet {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    max-width: 430px; margin: 0 auto;
+    background: white; border-radius: 20px 20px 0 0;
+    padding: 0 0 44px; max-height: 70vh; overflow-y: auto;
+    z-index: 101;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .sheet-overlay.on .sheet { transform: translateY(0); }
+  .sheet-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 0; }
+  .sheet-top {
+    padding: 14px 22px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .sheet-ttl { font-family:'DM Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--ink-mid); }
+  .sheet-clr { font-size:11px; color:var(--accent); cursor:pointer; background:none; border:none; font-family:'Noto Sans SC',sans-serif; }
+  .sheet-body { padding: 12px 22px; }
+  .sheet-empty { text-align:center; padding:32px 0; color:var(--ink-light); font-size:13px; }
+  .sheet-grp { margin-bottom: 14px; }
+  .sheet-dlbl { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--ink-light); margin-bottom:4px; }
+  .sheet-item { font-size:13px; color:var(--ink); padding:5px 0; border-bottom:1px solid var(--border); line-height:1.5; }
+  .sheet-item:last-child { border-bottom:none; }
+
+  .gap6 { height:6px; }
+</style>
+</head>
+<body>
+
+<header class="site-hdr">
+  <div class="hdr-eyebrow">May 24 – June 3, 2026</div>
+  <div class="hdr-title">波士顿 <em>&</em> 纽约</div>
+  <div class="hdr-meta">Lilith · 王昊 · 爸爸妈妈</div>
+  <div class="hdr-bottom">
+    <div class="sel-pill" id="selPill" onclick="openSheet()">
+      <div class="sel-dot"></div>
+      <span id="selCount">0 项已选</span>
+    </div>
+    <div class="export-row">
+      <button class="exp-btn" onclick="exportPDF()">PDF</button>
+      <button class="exp-btn" onclick="exportExcel()">Excel</button>
+      <button class="exp-btn" onclick="exportWord()">Word</button>
+    </div>
+  </div>
+</header>
+
+<div class="feed">
+
+<!-- 5/24 -->
+<div class="day-card" id="d524">
+  <div class="day-hdr" onclick="tog('d524')">
+    <div class="day-date-block"><span class="day-num">24</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周日</div>
+      <div class="day-ttl">接机</div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">行程</div>
+    <div class="irow"><div class="itime">23:00</div><div class="itext">落地，出来约凌晨12点<div class="isub">王昊接机，回 Cambridge 休息</div></div></div>
+  </div>
+</div>
+
+<!-- 5/25 -->
+<div class="day-card" id="d525">
+  <div class="day-hdr" onclick="tog('d525')">
+    <div class="day-date-block"><span class="day-num">25</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周一</div>
+      <div class="day-ttl">调时差 · 哈佛 · 查尔斯河</div>
+      <div class="day-tags"><span class="dtag dtag-note">下午出门</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">午饭</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="午饭：KFC 外卖">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name">KFC 外卖</div><div class="opt-detail">叫外卖到家</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="午饭：KFC 线下">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name">KFC 线下</div><div class="opt-detail">去线下吃</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="午饭：Le's 越南粉">
+        <div class="opt-n">03</div>
+        <div class="opt-c"><div class="opt-name">Le's — 越南粉</div><div class="opt-detail">哈佛校园边上 · 鸡翅好吃 · 旁边有 Mochi 冰淇淋</div></div>
+      </button>
+    </div>
+    <div class="slabel">下午</div>
+    <div class="irow"><div class="itime">饭后</div><div class="itext">穿戴好出门，一家人拍些照片（人少的话）</div></div>
+    <div class="irow"><div class="itime">13:30</div><div class="itext">沿查尔斯河散步</div></div>
+    <div class="irow"><div class="itime">14:30</div><div class="itext">哈佛校园 + 哈佛植物园 + CamLab<div class="isub">Lilith 工作的地方</div></div></div>
+    <div class="slabel">晚饭 · 哈佛广场步行可到</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="晚饭：An Nam ⭐⭐⭐">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">An Nam</div><div class="opt-detail">烤肉 plate · 糯米卷 · pho · 椰子虾</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="晚饭：EL Harvard Yard 墨西哥菜">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name">EL Harvard Yard</div><div class="opt-detail">墨西哥菜</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/25" data-label="晚饭：umekaaeugara 冷乌冬 ⭐">
+        <div class="opt-n">03</div>
+        <div class="opt-c"><div class="opt-name">umekaaeugara — 冷乌冬</div><div class="opt-stars">⭐</div></div>
+      </button>
+    </div>
+    <div class="gap6"></div>
+    <div class="irow"><div class="itime">饭后</div><div class="itext">顺路买龙虾回家当夜宵</div></div>
+  </div>
+</div>
+
+<!-- 5/26 -->
+<div class="day-card" id="d526">
+  <div class="day-hdr" onclick="tog('d526')">
+    <div class="day-date-block"><span class="day-num">26</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周二</div>
+      <div class="day-ttl">ICA · 猫猫健康证</div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午</div>
+    <div class="irow"><div class="itime">10:00</div><div class="itext">全家开车去 <span class="ibold">ICA</span><span class="ihour">10am–5pm</span><div class="isub">Seaport · 约1–2小时</div></div></div>
+    <div class="irow"><div class="itime">12:00</div><div class="itext">开车回 Cambridge，约12:30到家</div></div>
+    <div class="slabel">午饭 · 约12:30</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/26" data-label="午饭：楼下寿司店">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name">楼下寿司店</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/26" data-label="午饭：附近冷面 + Whole Foods 买菜">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name">附近吃冷面</div><div class="opt-detail">顺便 Whole Foods 买菜回来</div></div>
+      </button>
+    </div>
+    <div class="slabel">下午</div>
+    <div class="irow"><div class="itime">13:30</div><div class="itext">爸妈在家休息</div></div>
+    <div class="irow"><div class="itime">14:20</div><div class="itext">Lilith 和王昊带猫猫办健康证<div class="isub">Brookline · 结束早 → 顺路带爸妈兜兜；结束晚 → 直接回家</div></div></div>
+    <div class="slabel">晚饭</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/26" data-label="晚饭：Thonglor ⭐⭐">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">Thonglor</div><div class="opt-detail">鸭肉咖喱 · crying tiger 牛排</div><div class="opt-stars">⭐⭐</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/26" data-label="晚饭：An Nam ⭐⭐⭐">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">An Nam</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+    </div>
+    <div class="gap6"></div>
+    <div class="irow ipack"><div class="itime ipack">晚上</div><div class="itext">开始收拾一些东西</div></div>
+  </div>
+</div>
+
+<!-- 5/27 -->
+<div class="day-card grad" id="d527">
+  <div class="day-hdr" onclick="tog('d527')">
+    <div class="day-date-block"><span class="day-num">27</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周三</div>
+      <div class="day-ttl">Rehearsal · Class Day</div>
+      <div class="day-tags"><span class="dtag dtag-grad">毕业</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午</div>
+    <div class="irow"><div class="itime"></div><div class="itext">Lilith 全家和 May、ruoqian 的父母一起互相拍合照</div></div>
+    <button class="opt-optional" onclick="togOpt(this)" data-day="5/27" data-label="王昊带爸妈逛 Harvard Art Museums（10am–5pm）">
+      <span class="opt-chip">可选</span>
+      <div class="opt-c"><div class="opt-oname">王昊带爸妈逛 Harvard Art Museums</div><div class="opt-onote">10am–5pm</div></div>
+    </button>
+    <div class="slabel">11:30 · Rehearsal</div>
+    <div class="irow"><div class="itime">11:30</div><div class="itext"><span class="ibold">MDES Commencement Rehearsal</span><div class="isub">Gund Hall Room 516</div></div></div>
+    <div class="instr"><div class="instr-lbl">Original Instructions</div>Report to 5th floor Room 516 to line up and process to tent for rehearsal.</div>
+    <div class="slabel">午饭 · 约13:00</div>
+    <div class="irow"><div class="itime"></div><div class="itext">全家一起，学校附近随意</div></div>
+    <div class="slabel">下午 · Class Day</div>
+    <div class="irow"><div class="itime">14:45</div><div class="itext">爸妈、王昊入座<div class="isub">Gund Garden Tent · 2:45pm 开放</div></div></div>
+    <div class="irow"><div class="itime">15:30</div><div class="itext"><span class="ibold">Class Day Ceremony</span><div class="isub">Gund Garden Tent · 结束后 Gund 一楼有 Reception</div></div></div>
+    <div class="instr"><div class="instr-lbl">Original Instructions</div>Tent opens for seating at 2:45pm; graduates sit with their guests in the audience. Reception to follow in Gund first floor.</div>
+    <div class="slabel">晚饭</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/27" data-label="晚饭：The Boiling Crab">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">The Boiling Crab</div><div class="opt-detail">学校附近</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/27" data-label="晚饭：New Jumbo Seafood ⭐⭐⭐">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">New Jumbo Seafood</div><div class="opt-detail">椰子鸡 + 糯米炒饭</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 5/28 -->
+<div class="day-card grad" id="d528">
+  <div class="day-hdr" onclick="tog('d528')">
+    <div class="day-date-block"><span class="day-num">28</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周四</div>
+      <div class="day-ttl">毕业典礼</div>
+      <div class="day-tags"><span class="dtag dtag-grad">毕业</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午 · Morning Exercises</div>
+    <div class="irow"><div class="itime">07:30</div><div class="itext"><span class="ibold">Commencement Morning Exercises</span><div class="isub">Gund Hall Lobby · Lilith 8am 开始列队</div></div></div>
+    <div class="instr"><div class="instr-lbl">Original Instructions</div>Continental breakfast & credential pick up. Line up for procession begins at 8am. Wear your regalia. Bring your Harvard ID, marching card, and lunch ticket. Make sure your guests have their own Diploma Ceremony and lunch tickets since you may not have time to meet up with them later.</div>
+    <div class="slabel">12:00 · 午饭</div>
+    <div class="irow"><div class="itime">12:00</div><div class="itext">Commencement Day Lunch<div class="isub">Gund Hall 2楼 Mezzanine · 需要 lunch ticket</div></div></div>
+    <div class="instr"><div class="instr-lbl">Original Instructions</div>Immediately following Morning Exercises. Lunch tickets required. Graduates can pick up lunch on the 2nd floor Mezzanine in Gund Hall. Seating in the trays.</div>
+    <div class="slabel">13:30 · Ceremony</div>
+    <div class="irow"><div class="itime">13:30</div><div class="itext"><span class="ibold">MDes Commencement Day Ceremony</span><div class="isub">Gund Hall Room 516</div></div></div>
+    <div class="instr"><div class="instr-lbl">Original Instructions</div>Line up for GSD Diploma Ceremony procession. BRING YOUR MARCHING CARD.</div>
+    <div class="irow"><div class="itime">约16:30</div><div class="itext">芳和圆圆帮 Lilith、爸妈及同学们一起拍照</div></div>
+    <div class="slabel">晚饭 · 庆祝</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/28" data-label="晚饭：Mikiya Wagyu Shabu 和牛自助（Chinatown）">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">Mikiya Wagyu Shabu</div><div class="opt-detail">和牛寿喜烧自助 · Chinatown</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/28" data-label="晚饭：New Jumbo Seafood ⭐⭐⭐">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">New Jumbo Seafood</div><div class="opt-detail">椰子鸡 + 糯米炒饭</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 5/29 -->
+<div class="day-card nyc" id="d529">
+  <div class="day-hdr" onclick="tog('d529')">
+    <div class="day-date-block"><span class="day-num">29</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周五</div>
+      <div class="day-ttl">纽约 Day 1</div>
+      <div class="day-tags"><span class="dtag dtag-nyc">纽约</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">午饭 · 出发前</div>
+    <div class="irow"><div class="itime"></div><div class="itext">出发前在家解决，或火车上自带</div></div>
+    <div class="slabel">出发</div>
+    <div class="irow"><div class="itime ibold">11:40</div><div class="itext"><span class="ibold">Boston 出发</span><div class="isub">South Station → Penn Station</div></div></div>
+    <div class="irow"><div class="itime">15:52</div><div class="itext">Penn Station 到达<div class="isub">带行李直接出发，不 check in</div></div></div>
+    <div class="irow"><div class="itime">约16:00</div><div class="itext">排 <span class="ibold">Chodanggol</span>（北仓洞）号<div class="isub">一般需等约2小时</div></div></div>
+    <div class="irow"><div class="itime">16:00</div><div class="itext">逛 <span class="ibold">MoMA</span> + MoMA Design Store<div class="isub">MoMA 开至 8:30pm · Design Store 开至 9pm</div></div></div>
+    <button class="opt-optional" onclick="togOpt(this)" data-day="5/29" data-label="等位期间 Apollo Bagels 垫肚子">
+      <span class="opt-chip">可选</span>
+      <div class="opt-c"><div class="opt-oname">等位期间很饿 → Apollo Bagels 垫一下</div></div>
+    </button>
+    <div class="slabel">晚饭</div>
+    <div class="irow"><div class="itime">约18:00</div><div class="itext">排到号 → <span class="ibold">Chodanggol</span> 吃晚饭</div></div>
+    <div class="slabel">饭后</div>
+    <div class="irow"><div class="itime"></div><div class="itext"><span class="ibold">时代广场</span>逛逛 + Heytea（喜茶）</div></div>
+    <div class="irow"><div class="itime">最后</div><div class="itext">玩完后往北 check in 酒店</div></div>
+  </div>
+</div>
+
+<!-- 5/30 -->
+<div class="day-card nyc" id="d530">
+  <div class="day-hdr" onclick="tog('d530')">
+    <div class="day-date-block"><span class="day-num">30</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周六</div>
+      <div class="day-ttl">纽约 Day 2 · 回波士顿</div>
+      <div class="day-tags"><span class="dtag dtag-nyc">纽约</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午</div>
+    <div class="irow"><div class="itime">10:00</div><div class="itext">起床出发</div></div>
+    <div class="irow"><div class="itime">10:30</div><div class="itext"><span class="ibold">The Met</span><div class="isub">周六 10am–9pm</div></div></div>
+    <div class="irow"><div class="itime">逛完后</div><div class="itext"><span class="ibold">中央公园</span>散步</div></div>
+    <div class="slabel">午饭 · 中央公园附近</div>
+    <div class="irow"><div class="itime"></div><div class="itext">公园附近随意</div></div>
+    <div class="slabel">回程</div>
+    <div class="irow"><div class="itime ibold">约15:10</div><div class="itext"><span class="ibold">出发去 Penn Station</span><div class="isub">地铁约35分钟 · 4/5/6 → E线 · 16:02 火车</div></div></div>
+    <div class="irow"><div class="itime ibold">16:02</div><div class="itext"><span class="ibold">Penn Station 出发</span></div></div>
+    <div class="irow"><div class="itime">约20:00</div><div class="itext">回波士顿</div></div>
+    <div class="slabel">晚饭 · 回程后</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/30" data-label="晚饭：爸爸在家做饭">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name">爸爸在家做饭</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/30" data-label="晚饭：叫外卖">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name">叫外卖</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 5/31 -->
+<div class="day-card" id="d531">
+  <div class="day-hdr" onclick="tog('d531')">
+    <div class="day-date-block"><span class="day-num">31</span></div>
+    <div class="day-info">
+      <div class="day-month-week">5月 · 周日</div>
+      <div class="day-ttl">Castle Hill · 顺路景点</div>
+      <div class="day-tags"><span class="dtag dtag-note">开车约1小时</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">出发</div>
+    <div class="irow"><div class="itime">10:00</div><div class="itext">出发</div></div>
+    <div class="irow"><div class="itime">约11:30</div><div class="itext"><span class="ibold">Castle Hill on the Crane Estate</span><div class="isub">Ipswich · 9am–5pm · 《小妇人》取景地 · 游览约1.5–2小时</div></div></div>
+    <div class="slabel">午饭 · 约13:30，路上顺道</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/31" data-label="午饭：Texas Roadhouse 去程（离家近）">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">Texas Roadhouse — 去程</div><div class="opt-detail">离家近的一家 · 牛排</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/31" data-label="午饭：Texas Roadhouse 回程（路中间）">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">Texas Roadhouse — 回程</div><div class="opt-detail">路中间的一家 · 牛排</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/31" data-label="午饭：Ipswich 当地餐厅">
+        <div class="opt-n">03</div>
+        <div class="opt-c"><div class="opt-name">Ipswich 当地餐厅</div></div>
+      </button>
+    </div>
+    <div class="slabel">顺路景点 · 可选</div>
+    <button class="opt-optional" onclick="togOpt(this)" data-day="5/31" data-label="Rockport 海边小镇">
+      <span class="opt-chip">可选</span><div class="opt-c"><div class="opt-oname">Rockport 海边小镇</div></div>
+    </button>
+    <button class="opt-optional" onclick="togOpt(this)" data-day="5/31" data-label="Manchester-by-the-Sea 海边">
+      <span class="opt-chip">可选</span><div class="opt-c"><div class="opt-oname">Manchester-by-the-Sea 海边</div></div>
+    </button>
+    <button class="opt-optional" onclick="togOpt(this)" data-day="5/31" data-label="Salem 女巫小镇（回程顺路，约1小时）">
+      <span class="opt-chip">可选</span><div class="opt-c"><div class="opt-oname">Salem 女巫小镇<div class="opt-onote">回程顺路 · 逛约1小时</div></div></div>
+    </button>
+    <div class="slabel">回程</div>
+    <div class="irow"><div class="itime">约18:00</div><div class="itext">回到 Cambridge</div></div>
+    <div class="slabel">晚饭</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/31" data-label="晚饭：香满园 椰子鸡外卖 ⭐⭐⭐">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">香满园 — 椰子鸡外卖</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="5/31" data-label="晚饭：爸爸在家做饭">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name">爸爸在家做饭</div></div>
+      </button>
+    </div>
+    <div class="gap6"></div>
+    <div class="irow ipack"><div class="itime ipack">睡前</div><div class="itext">收拾行李约1–2小时</div></div>
+  </div>
+</div>
+
+<!-- 6/1 -->
+<div class="day-card" id="d601">
+  <div class="day-hdr" onclick="tog('d601')">
+    <div class="day-date-block"><span class="day-num">1</span></div>
+    <div class="day-info">
+      <div class="day-month-week">6月 · 周一</div>
+      <div class="day-ttl">MIT · Gardner · MFA</div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午</div>
+    <div class="irow"><div class="itime">10:30</div><div class="itext">出发</div></div>
+    <div class="irow"><div class="itime">11:00</div><div class="itext"><span class="ibold">MIT Media Lab</span> 拍照</div></div>
+    <div class="irow"><div class="itime">11:30</div><div class="itext"><span class="ibold">MIT Museum</span><div class="isub">约1小时</div></div></div>
+    <div class="slabel">午饭 · MIT 附近，约12:30</div>
+    <div class="irow"><div class="itime"></div><div class="itext"><span class="ibold">Su&Me（素苗）</span>— 中餐</div></div>
+    <div class="slabel">下午</div>
+    <div class="irow"><div class="itime">约13:30</div><div class="itext"><span class="ibold">Isabella Stewart Gardner Museum</span><div class="isub">11am–5pm · 约1小时 · 建议地铁（MFA附近停车难）</div></div></div>
+    <div class="irow"><div class="itime">约14:45</div><div class="itext"><span class="ibold">MFA</span><div class="isub">步行5分钟 · 约2小时</div></div></div>
+    <div class="irow"><div class="itime">约17:30</div><div class="itext">回家</div></div>
+    <div class="irow"><div class="itime">17:30</div><div class="itext">Trader Joe's / Whole Foods 买菜<div class="isub">走路可到</div></div></div>
+    <div class="irow ipack"><div class="itime ipack">19:00</div><div class="itext">收拾行李约2小时</div></div>
+    <div class="slabel">晚饭</div>
+    <div class="opt-group" data-single="true">
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="6/1" data-label="晚饭：An Nam ⭐⭐⭐">
+        <div class="opt-n">01</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">An Nam</div><div class="opt-stars">⭐⭐⭐</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="6/1" data-label="晚饭：Thonglor ⭐⭐">
+        <div class="opt-n">02</div>
+        <div class="opt-c"><div class="opt-name opt-name-bold">Thonglor</div><div class="opt-stars">⭐⭐</div></div>
+      </button>
+      <button class="opt-btn" onclick="pickOpt(this)" data-day="6/1" data-label="晚饭：爸爸用买好的食材在家做饭">
+        <div class="opt-n">03</div>
+        <div class="opt-c"><div class="opt-name">爸爸用买好的食材在家做饭</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 6/2 -->
+<div class="day-card pack" id="d602">
+  <div class="day-hdr" onclick="tog('d602')">
+    <div class="day-date-block"><span class="day-num">2</span></div>
+    <div class="day-info">
+      <div class="day-month-week">6月 · 周二</div>
+      <div class="day-ttl">瓦尔登湖 · 收拾行李</div>
+      <div class="day-tags"><span class="dtag dtag-pack">打包日</span></div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">上午</div>
+    <div class="irow ipack"><div class="itime ipack">上午</div><div class="itext">收拾行李约2小时</div></div>
+    <div class="slabel">午饭 · 约12:00，在家</div>
+    <div class="irow"><div class="itime"></div><div class="itext">爸爸在家做饭<div class="isub">用前一天买好的食材</div></div></div>
+    <div class="slabel">下午</div>
+    <div class="irow"><div class="itime">13:00</div><div class="itext">Lilith 打过敏针</div></div>
+    <div class="irow"><div class="itime">约13:30</div><div class="itext"><span class="ibold">瓦尔登湖</span><div class="isub">开车约20分钟 · 随意逛</div></div></div>
+    <div class="irow"><div class="itime">约16:00</div><div class="itext">回家</div></div>
+    <div class="irow ipack"><div class="itime ipack">16:00</div><div class="itext">继续收拾行李约2小时</div></div>
+    <div class="slabel">晚饭 · 在家</div>
+    <div class="irow"><div class="itime"></div><div class="itext">爸爸做饭</div></div>
+    <div class="irow ipack"><div class="itime ipack">晚上</div><div class="itext">提前买好明早路上吃的食物</div></div>
+  </div>
+</div>
+
+<!-- 6/3 -->
+<div class="day-card" id="d603">
+  <div class="day-hdr" onclick="tog('d603')">
+    <div class="day-date-block"><span class="day-num">3</span></div>
+    <div class="day-info">
+      <div class="day-month-week">6月 · 周三</div>
+      <div class="day-ttl">送机</div>
+    </div>
+    <div class="chev">▾</div>
+  </div>
+  <div class="day-body">
+    <div class="slabel">早晨</div>
+    <div class="irow"><div class="itime">起床后</div><div class="itext">吃前一晚备好的路上食物</div></div>
+    <div class="irow"><div class="itime ibold">06:30</div><div class="itext"><span class="ibold">王昊送爸妈前往机场</span></div></div>
+    <div class="irow"><div class="itime ibold">09:50</div><div class="itext"><span class="ibold">航班起飞</span></div></div>
+  </div>
+</div>
+
+</div>
+
+<!-- BOTTOM SHEET -->
+<div class="sheet-overlay" id="sheetOv" onclick="closeSheet()">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-top">
+      <div class="sheet-ttl">已选择的项目</div>
+      <button class="sheet-clr" onclick="clearAll()">清除全部</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"><div class="sheet-empty">还没有选择任何项目</div></div>
+  </div>
+</div>
+
+<script>
+function tog(id) { document.getElementById(id).classList.toggle('open'); }
+
+const sel = new Map();
+
+function pickOpt(btn) {
+  const grp = btn.closest('.opt-group');
+  const key = btn.dataset.day + '||' + btn.dataset.label;
+  const was = btn.classList.contains('sel');
+  grp.querySelectorAll('.opt-btn').forEach(b => {
+    if (b.classList.contains('sel')) {
+      sel.delete(b.dataset.day + '||' + b.dataset.label);
+      b.classList.remove('sel');
+    }
+  });
+  if (!was) {
+    btn.classList.add('sel');
+    sel.set(key, { day: btn.dataset.day, label: btn.dataset.label });
+  }
+  updateUI();
+}
+
+function togOpt(btn) {
+  const key = btn.dataset.day + '||' + btn.dataset.label;
+  if (btn.classList.contains('sel')) {
+    btn.classList.remove('sel'); sel.delete(key);
+  } else {
+    btn.classList.add('sel');
+    sel.set(key, { day: btn.dataset.day, label: btn.dataset.label });
+  }
+  updateUI();
+}
+
+function updateUI() {
+  const n = sel.size;
+  const pill = document.getElementById('selPill');
+  document.getElementById('selCount').textContent = n + ' 项已选';
+  pill.classList.toggle('on', n > 0);
+  renderSheet();
+}
+
+function renderSheet() {
+  const body = document.getElementById('sheetBody');
+  if (sel.size === 0) { body.innerHTML = '<div class="sheet-empty">还没有选择任何项目</div>'; return; }
+  const byDay = {};
+  sel.forEach(v => { if (!byDay[v.day]) byDay[v.day] = []; byDay[v.day].push(v.label); });
+  let html = '';
+  Object.keys(byDay).sort().forEach(day => {
+    html += '<div class="sheet-grp"><div class="sheet-dlbl">' + day + '</div>';
+    byDay[day].forEach(l => { html += '<div class="sheet-item">' + l + '</div>'; });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+function openSheet()  { document.getElementById('sheetOv').classList.add('on'); }
+function closeSheet() { document.getElementById('sheetOv').classList.remove('on'); }
+
+function clearAll() {
+  sel.clear();
+  document.querySelectorAll('.opt-btn.sel,.opt-optional.sel').forEach(b => b.classList.remove('sel'));
+  updateUI();
+}
+
+function exportPDF() { window.print(); }
+
+function exportExcel() {
+  let csv = '\uFEFF日期,项目,备注\n';
+  [
+    ['5/24 周日','接机 — 晚11点落地，王昊接机',''],
+    ['5/25 周一','13:30 查尔斯河散步',''],
+    ['5/25 周一','14:30 哈佛校园 + 哈佛植物园 + CamLab',''],
+    ['5/26 周二','10:00 全家去ICA（Seaport）','10am–5pm'],
+    ['5/26 周二','14:20 Lilith和王昊带猫猫办健康证','Brookline'],
+    ['5/27 周三','上午 全家和May、ruoqian父母互相拍合照',''],
+    ['5/27 周三','11:30–13:00 MDES Commencement Rehearsal','Gund Hall 516'],
+    ['5/27 周三','午饭 全家一起，学校附近随意',''],
+    ['5/27 周三','15:30–17:00 Class Day Ceremony','Gund Garden Tent'],
+    ['5/28 周四','07:30 Commencement Morning Exercises','带Harvard ID/marching card/lunch ticket'],
+    ['5/28 周四','12:00 Commencement Day Lunch','Gund Hall 2F，需lunch ticket'],
+    ['5/28 周四','13:30 MDes Commencement Day Ceremony','带marching card，Gund Hall 516'],
+    ['5/28 周四','约16:30 芳和圆圆帮拍照',''],
+    ['5/29 周五','11:40 Boston出发 → 15:52 Penn Station',''],
+    ['5/29 周五','逛MoMA + MoMA Design Store','MoMA开至8:30pm'],
+    ['5/29 周五','约18:00 Chodanggol晚饭',''],
+    ['5/29 周五','时代广场 + Heytea（喜茶）',''],
+    ['5/30 周六','10:30 The Met','周六10am–9pm'],
+    ['5/30 周六','中央公园散步',''],
+    ['5/30 周六','约15:10 出发去Penn Station','地铁4/5/6→E线，约35分钟'],
+    ['5/30 周六','16:02 Penn Station出发 → 约20:00回波士顿',''],
+    ['5/31 周日','约11:30 Castle Hill on the Crane Estate','Ipswich，《小妇人》取景地'],
+    ['6/1 周一','11:00 MIT Media Lab + MIT Museum',''],
+    ['6/1 周一','12:30 午饭 Su&Me（素苗）',''],
+    ['6/1 周一','约13:30 Gardner Museum','11am–5pm'],
+    ['6/1 周一','约14:45 MFA','约2小时'],
+    ['6/1 周一','17:30 Trader Joe\'s / Whole Foods 买菜',''],
+    ['6/2 周二','上午收拾行李','约2小时'],
+    ['6/2 周二','12:00 午饭在家（爸爸做饭）',''],
+    ['6/2 周二','13:00 Lilith打过敏针',''],
+    ['6/2 周二','约13:30 瓦尔登湖','开车约20分钟'],
+    ['6/3 周三','06:30 王昊送爸妈去机场',''],
+    ['6/3 周三','09:50 航班起飞',''],
+  ].forEach(r => { csv += r.map(c=>`"${c}"`).join(',') + '\n'; });
+  if (sel.size > 0) {
+    csv += '\n"","已选择的偏好",""\n';
+    sel.forEach(v => { csv += `"${v.day}","${v.label}","✓"\n`; });
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = '波士顿家庭行程_2026.csv'; a.click();
+}
+
+function exportWord() {
+  let h = '<html><head><meta charset="UTF-8"><style>body{font-family:"Microsoft YaHei",sans-serif;font-size:11pt;margin:2cm}h1{font-size:18pt}h2{font-size:13pt;border-bottom:1px solid #ccc;padding-bottom:4pt;margin-top:14pt}p{margin:4pt 0}.sel{color:#C4793A}.note{color:#888;font-size:9pt}</style></head><body>';
+  h += '<h1>波士顿 & 纽约 · 家庭行程 2026</h1><p class="note">Lilith · 王昊 · 爸爸妈妈 | May 24 – June 3, 2026</p>';
+  if (sel.size > 0) {
+    h += '<h2>已选择的偏好</h2>';
+    const bd = {};
+    sel.forEach(v => { if(!bd[v.day]) bd[v.day]=[]; bd[v.day].push(v.label); });
+    Object.keys(bd).sort().forEach(d => {
+      h += `<p><strong>${d}</strong></p>`;
+      bd[d].forEach(l => { h += `<p class="sel">✓ ${l}</p>`; });
+    });
+  }
+  [
+    {d:'5/24 周日',t:'接机',items:['23:00 落地，王昊接机，回Cambridge休息']},
+    {d:'5/25 周一',t:'调时差 · 哈佛 · 查尔斯河',items:['午饭：KFC外卖 / KFC线下 / Le\'s越南粉','一家人拍照','13:30 查尔斯河散步','14:30 哈佛校园 + 哈佛植物园 + CamLab','晚饭：An Nam / EL Harvard Yard / 冷乌冬','吃完买龙虾当夜宵']},
+    {d:'5/26 周二',t:'ICA · 猫猫健康证',items:['10:00 全家去ICA（Seaport，10am–5pm）','约12:30 回家，午饭：楼下寿司 或 冷面+买菜','14:20 Lilith和王昊带猫猫办健康证（Brookline）','晚饭：Thonglor / An Nam','晚上收拾东西']},
+    {d:'5/27 周三',t:'Rehearsal · Class Day ★',items:['上午 Lilith全家和May、ruoqian父母互相拍合照','可选：王昊带爸妈逛Harvard Art Museums','11:30–13:00 MDES Rehearsal，Gund Hall 516','午饭：全家一起，学校附近随意','14:45 爸妈王昊入座（Gund Garden Tent）','15:30–17:00 Class Day Ceremony','Reception at Gund 1F','晚饭：Boiling Crab / New Jumbo Seafood']},
+    {d:'5/28 周四',t:'毕业典礼 ★',items:['07:30 Morning Exercises（8am列队，带ID/marching card/lunch ticket）','12:00 Lunch，Gund Hall 2F','13:30 MDes Ceremony，Room 516（带marching card）','约16:30 芳和圆圆帮拍照','晚饭：Mikiya Wagyu Shabu / New Jumbo Seafood（庆祝）']},
+    {d:'5/29 周五',t:'纽约 Day 1',items:['午饭：出发前在家或火车上自带','11:40 Boston出发 → 15:52 Penn Station','约16:00 排Chodanggol号（约等2小时）','逛MoMA + Design Store（MoMA开至8:30pm）','约18:00 Chodanggol晚饭','时代广场 + Heytea','玩完往北check in']},
+    {d:'5/30 周六',t:'纽约 Day 2 · 回波士顿',items:['10:30 The Met（周六10am–9pm）','中央公园散步','午饭：公园附近随意','约15:10 地铁去Penn Station（4/5/6→E线）','16:02 出发 → 约20:00回波士顿','晚饭：爸爸做饭 / 叫外卖']},
+    {d:'5/31 周日',t:'Castle Hill · 顺路景点',items:['10:00 出发','约11:30 Castle Hill，Ipswich（《小妇人》取景地）','午饭：Texas Roadhouse（去程或回程）/ Ipswich当地','可选：Rockport / Manchester-by-the-Sea / Salem','约18:00 回Cambridge','晚饭：香满园椰子鸡外卖 / 爸爸做饭','睡前收拾行李1–2小时']},
+    {d:'6/1 周一',t:'MIT · Gardner · MFA',items:['10:30 出发','11:00 MIT Media Lab拍照','11:30 MIT Museum（约1小时）','12:30 午饭：Su&Me（素苗）','约13:30 Gardner Museum（约1小时）','约14:45 MFA（约2小时）','17:30 回家，买菜','19:00 收拾行李约2小时','晚饭：An Nam / Thonglor / 爸爸做饭']},
+    {d:'6/2 周二',t:'瓦尔登湖 · 收拾行李',items:['上午收拾行李约2小时','12:00 午饭：爸爸做饭','13:00 Lilith打过敏针','约13:30 瓦尔登湖（开车约20分钟）','约16:00 回家，继续收拾行李约2小时','晚饭：爸爸做饭','提前买好明早路上食物']},
+    {d:'6/3 周三',t:'送机',items:['起床后吃备好的食物','06:30 王昊送爸妈去机场','09:50 航班起飞']},
+  ].forEach(({d,t,items}) => {
+    h += `<h2>${d} &nbsp; ${t}</h2>`;
+    items.forEach(i => { h += `<p>· ${i}</p>`; });
+  });
+  h += '</body></html>';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+h], {type:'application/msword;charset=utf-8'}));
+  a.download = '波士顿家庭行程_2026.doc'; a.click();
+}
+</script>
+</body>
+</html>
